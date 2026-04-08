@@ -39,34 +39,47 @@ export async function GET() {
 }
 
 async function fetchKoreanTrends(): Promise<{ keyword: string; buzz_count: number }[]> {
+  // Google Trends Korea RSS (공개 피드, 인증 불필요)
   try {
-    const res = await fetch('https://www.fmkorea.com/index.php?mid=best', {
+    const res = await fetch('https://trends.google.com/trends/trendingsearches/daily/rss?geo=KR', {
       headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
       signal: AbortSignal.timeout(8000),
     });
-    const html = await res.text();
-    const keywords = extractKeywordsFromFmkorea(html);
-    if (keywords.length >= 5) return keywords;
+    if (res.ok) {
+      const xml = await res.text();
+      const keywords = parseGoogleTrendsRSS(xml);
+      if (keywords.length >= 5) return keywords;
+    }
   } catch {}
 
   return getFallbackTrends();
 }
 
-function extractKeywordsFromFmkorea(html: string): { keyword: string; buzz_count: number }[] {
+function parseGoogleTrendsRSS(xml: string): { keyword: string; buzz_count: number }[] {
   const results: { keyword: string; buzz_count: number }[] = [];
-  const titleRegex = /class="title[^"]*"[^>]*>([^<]{2,30})</g;
-  const seen = new Set<string>();
-  let match;
-  let rank = 1;
 
-  while ((match = titleRegex.exec(html)) !== null && results.length < 20) {
-    const title = match[1].trim();
-    if (title.length < 2 || title.length > 20) continue;
-    if (seen.has(title)) continue;
-    if (/^\d+$/.test(title)) continue;
-    seen.add(title);
-    results.push({ keyword: title, buzz_count: Math.floor(10000 / rank) * 100 });
-    rank++;
+  // <title> 태그에서 트렌드 키워드 추출
+  const titleRegex = /<title><!\[CDATA\[([^\]]+)\]\]><\/title>|<title>([^<]+)<\/title>/g;
+  // approx_traffic 추출
+  const trafficRegex = /<ht:approx_traffic>([^<]+)<\/ht:approx_traffic>/g;
+
+  const titles: string[] = [];
+  const traffics: number[] = [];
+
+  let m;
+  while ((m = titleRegex.exec(xml)) !== null) {
+    const title = (m[1] || m[2] || '').trim();
+    if (title && title !== 'Google Trends' && title.length > 1) {
+      titles.push(title);
+    }
+  }
+  while ((m = trafficRegex.exec(xml)) !== null) {
+    const raw = m[1].replace(/[^0-9]/g, '');
+    traffics.push(parseInt(raw) || 0);
+  }
+
+  for (let i = 0; i < Math.min(titles.length, 20); i++) {
+    results.push({ keyword: titles[i], buzz_count: traffics[i] || (20 - i) * 1000 });
   }
 
   return results;
