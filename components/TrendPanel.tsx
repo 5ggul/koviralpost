@@ -219,7 +219,7 @@ export default function TrendPanel({
       <div style={{ padding: '12px 16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
           <div style={{ fontSize: 12, color: '#536471', fontWeight: 700, letterSpacing: '0.05em' }}>
-            실시간 트렌드 {lastFetched && <span style={{ fontWeight: 400 }}>({lastFetched} 기준)</span>}
+            커뮤니티 핫이슈 {lastFetched && <span style={{ fontWeight: 400 }}>({lastFetched} 기준)</span>}
           </div>
           <button onClick={loadTrends} style={{ background: 'none', border: 'none', color: '#536471', cursor: 'pointer', fontSize: 11 }}>
             🔄 새로고침
@@ -235,7 +235,7 @@ export default function TrendPanel({
         {trendLoading ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {Array(10).fill(0).map((_, i) => (
-              <div key={i} className="skeleton" style={{ height: 36 }} />
+              <div key={i} className="skeleton" style={{ height: 44 }} />
             ))}
           </div>
         ) : (
@@ -245,17 +245,21 @@ export default function TrendPanel({
                 key={i}
                 onClick={() => onSelect(t.keyword)}
                 style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '8px 10px', borderRadius: 8, border: 'none',
+                  display: 'flex', alignItems: 'flex-start', gap: 8,
+                  padding: '9px 10px', borderRadius: 8, border: 'none',
                   background: selectedKeyword === t.keyword ? '#1D9BF015' : 'transparent',
                   borderLeft: selectedKeyword === t.keyword ? '2px solid #1D9BF0' : '2px solid transparent',
                   cursor: 'pointer', textAlign: 'left', width: '100%',
                   transition: 'background 0.1s',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 11, color: '#536471', minWidth: 16 }}>{i + 1}</span>
-                  <span style={{ fontSize: 13, color: selectedKeyword === t.keyword ? '#1D9BF0' : '#E7E9EA', fontWeight: selectedKeyword === t.keyword ? 700 : 400 }}>
+                <span style={{ fontSize: 11, color: '#536471', minWidth: 16, paddingTop: 2, flexShrink: 0 }}>{i + 1}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{
+                    fontSize: 12, color: selectedKeyword === t.keyword ? '#1D9BF0' : '#E7E9EA',
+                    fontWeight: selectedKeyword === t.keyword ? 700 : 400,
+                    lineHeight: 1.4, display: 'block', wordBreak: 'keep-all',
+                  }}>
                     {t.keyword}
                   </span>
                 </div>
